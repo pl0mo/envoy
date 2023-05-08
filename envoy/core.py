@@ -47,6 +47,7 @@ def _is_alive(thread):
 
 
 class Command(object):
+
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
@@ -56,23 +57,34 @@ class Command(object):
         self.data = None
         self.exc = None
 
-    def run(self, data, timeout, kill_timeout, env, cwd):
+    def get_default_parameters(self):
+        """Returns default subprocess parameters
+        """
+        return {
+            "universal_newlines": True,
+            "shell": False,
+            "bufsize": 0
+        }
+
+    def run(self, data, timeout, kill_timeout, env, cwd, **kw):
         self.data = data
         environ = dict(os.environ)
         environ.update(env or {})
 
         def target():
 
+            parameters = self.get_default_parameters()
+            parameters.update(kw)
+
             try:
-                self.process = subprocess.Popen(self.cmd,
-                    universal_newlines=True,
-                    shell=False,
+                self.process = subprocess.Popen(
+                    self.cmd,
                     env=environ,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    bufsize=0,
                     cwd=cwd,
+                    **parameters
                 )
 
                 if sys.version_info[0] >= 3:
